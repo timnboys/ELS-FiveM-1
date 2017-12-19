@@ -1,6 +1,7 @@
 ﻿using System;
 using CitizenFX.Core;
 using CitizenFX.Core.Native;
+using System.Threading.Tasks;
 
 namespace ELS
 {
@@ -11,14 +12,25 @@ namespace ELS
             return configuration.VCF.ELSVehicle.Exists(obj => obj.Item2.FileName == vehicle.DisplayName);
         }
 
+        async public static Task<bool> RequestCollision(this Vehicle vehicle)
+        {
+
+            CitizenFX.Core.Native.Function.Call(Hash.REQUEST_COLLISION_AT_COORD, vehicle.Position.X, vehicle.Position.Y, vehicle.Position.Z);
+            while (Function.Call<bool>(Hash.HAS_COLLISION_LOADED_AROUND_ENTITY, vehicle))
+            {
+                await BaseScript.Delay(0);
+            }
+            CitizenFX.Core.Debug.WriteLine("collision loaded");
+            return true;
+        }
         //public static void CleanUp(this PoolObject poolObject)
         //{
         //    if (!poolObject.Exists()) poolObject.CleanUp();
         //}
 
-        public static Int64 GetNetworkId(this Entity entity)
+        public static int GetNetworkId(this Entity entity)
         {
-            return Function.Call<Int64>(Hash.VEH_TO_NET, entity.Handle);
+            return Function.Call<int>(Hash.VEH_TO_NET, entity.Handle);
         }
 
         public static void RegisterAsNetworked(this Entity entity)

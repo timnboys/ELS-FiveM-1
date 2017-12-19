@@ -19,15 +19,16 @@ namespace ELS
             polModel.MarkAsNoLongerNeeded();
             //veh.RegisterAsNetworked();
             Screen.ShowNotification($"network status {Function.Call<bool>(Hash.NETWORK_GET_ENTITY_IS_NETWORKED, veh)}");
-            //veh.SetExistOnAllMachines(true);
-            //await CitizenFX.Core.BaseScript.Delay(10000);
+            veh.SetExistOnAllMachines(true);
+            await CitizenFX.Core.BaseScript.Delay(10000);
+            CitizenFX.Core.Debug.WriteLine($"vehtonet{API.VehToNet(veh.Handle)} getnetworkidfromentity{API.NetworkGetNetworkIdFromEntity(veh.Handle)}");
 
             if (veh == null)
             {
                 CitizenFX.Core.Debug.WriteLine("failure to spawn");
                 return;
             }
-            Game.Player.Character.SetIntoVehicle(veh, VehicleSeat.Any);
+           // Game.Player.Character.SetIntoVehicle(veh, VehicleSeat.Any);
         }
 
     }

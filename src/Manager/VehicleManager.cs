@@ -29,9 +29,11 @@ namespace ELS.Manager
             )
             {
                 //Screen.ShowNotification("adding vehicle");
-                AddIfNotPresint(Game.PlayerPed.CurrentVehicle,vehicle: out _currentVehicle);
-
+                API.SetEntityAsMissionEntity(Game.PlayerPed.CurrentVehicle.Handle, false, false);
+                Game.PlayerPed.CurrentVehicle.SetExistOnAllMachines(true);
+                AddIfNotPresint(API.VehToNet(Game.PlayerPed.CurrentVehicle.Handle), vehicle: out _currentVehicle);
                 _currentVehicle?.RunTick();
+#if DEBUG
                 if (Game.IsControlJustPressed(0, Control.Cover))
                 {
                     FullSync.FullSyncManager.SendDataBroadcast(
@@ -40,6 +42,7 @@ namespace ELS.Manager
                     CitizenFX.Core.UI.Screen.ShowNotification("FullSync™ ran");
                     CitizenFX.Core.Debug.WriteLine("FullSync™ ran");
                 }
+#endif
             }
             foreach (ELSVehicle veh in Entities)
             {
@@ -58,19 +61,35 @@ namespace ELS.Manager
             //TODO Chnage how I check for the panic alarm
         }
 
-        private bool AddIfNotPresint(PoolObject o, [Optional] IDictionary<string, object> data, [Optional]out ELSVehicle vehicle)
+        private bool AddIfNotPresint(int NETID, [Optional] IDictionary<string, object> data, [Optional]out ELSVehicle vehicle)
         {
-            if (!Entities.Exists(poolObject => poolObject.Handle == o.Handle))
+            if (NETID == 0)
+            {
+                CitizenFX.Core.Debug.WriteLine("ERROR NetwordID equals 0\n");
+                vehicle = null;
+                return false;
+            }
+            
+            else if (!Entities.Exists(poolObject => ((ELSVehicle) poolObject).GetNetworkId() == NETID))
             {
                 if (data == null) data = new Dictionary<string, object>();
-                var veh = new ELSVehicle(o.Handle, data);
-                Entities.Add(veh);
-                vehicle = veh;
-                return false;
+                try
+                {
+                    var veh = new ELSVehicle(API.NetToVeh(NETID), data);
+                    Entities.Add(veh);
+                    vehicle = veh;
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    vehicle = null;
+                    return false;
+                }
+               
             }
             else
             {
-                vehicle = Entities.Find(poolObject => poolObject.Handle == o.Handle) as ELSVehicle;
+                vehicle = Entities.Find(poolObject => ((ELSVehicle)poolObject).GetNetworkId() == NETID) as ELSVehicle;
                 return true;
             }
         }
@@ -95,29 +114,37 @@ namespace ELS.Manager
         /// Proxies the sync data to a certain vehicle
         /// </summary>
         /// <param name="dataDic">data</param>
-        internal void SetVehicleSyncData(IDictionary<string, object> dataDic)
+        async internal void SetVehicleSyncData(IDictionary<string, object> dataDic)
         {
-            AddIfNotPresint(new Vehicle(
-                        Function.Call<int>(Hash.NETWORK_GET_ENTITY_FROM_NETWORK_ID, (long)dataDic["NetworkID"])
-                        )
-                        , dataDic,out ELSVehicle veh);
-            veh.SetData(dataDic);
+#if DEBUG
+            CitizenFX.Core.Debug.WriteLine($"creating vehicle with NETID of {(int)dataDic["NetworkID"]} LOCALID of {CitizenFX.Core.Native.API.NetToVeh((int)dataDic["NetworkID"])}");
+#endif
+            var bo = AddIfNotPresint((int)dataDic["NetworkID"]
+                        , dataDic,out ELSVehicle veh1);
+            veh1.SetData(dataDic);
         }
 
-        internal static void SyncRequestReply(long NetworkId)
+        internal static void SyncRequestReply(int NetworkId)
         {
+            if (NetworkId == 0)
+            {
+                CitizenFX.Core.Debug.WriteLine("ERROR NetwordID equals 0\n");
+                return;
+            }
             FullSync.FullSyncManager.SendDataBroadcast(
                 ((ELSVehicle)Entities.Find(o => ((ELSVehicle)o).GetNetworkId() == NetworkId)).GetData()
             );
         }
-        internal void SyncAllVehiclesOnFirstSpawn(IList data)
+        internal void SyncAllVehiclesOnFirstSpawn(System.Dynamic.ExpandoObject data)
         {
-            foreach(Dictionary<string,object> element in data)
+            dynamic k = data;
+            var y = data.ToArray();
+            foreach ( var struct1 in y)
             {
-                AddIfNotPresint(new Vehicle(
-                        Function.Call<int>(Hash.NETWORK_GET_ENTITY_FROM_NETWORK_ID, (long)element["NetworkID"])
-                        ),
-                        element,
+                int netID = int.Parse(struct1.Key);
+                var vehData = (IDictionary<string,object>)struct1.Value;
+                AddIfNotPresint((int)vehData["NetworkID"],
+                        vehData,
                         out ELSVehicle veh
                 );
             }

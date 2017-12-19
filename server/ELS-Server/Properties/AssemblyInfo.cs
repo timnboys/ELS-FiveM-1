@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ELS FiveM")]
+[assembly: AssemblyTitle("ELS-Server")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("FiveM Scripts")]
-[assembly: AssemblyProduct("ELS-FiveM")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("ELS-Server")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("11ac40ba-192e-40d0-8a7e-1d800350d9f7")]
+[assembly: Guid("9858cb4d-f98d-497b-a532-a4db965e898c")]
 
 // Version information for an assembly consists of the following four values:
 //
